@@ -8,6 +8,14 @@ import { CELL_SIZE, CANVAS_WIDTH, CANVAS_HEIGHT } from "./constants";
 import { loadAudio } from "@/assets/sounds";
 import type { Direction } from "./types";
 
+// Define our controls
+enum Controls {
+  up = 'up',
+  down = 'down',
+  left = 'left',
+  right = 'right'
+}
+
 const Board = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>(0);
@@ -26,10 +34,10 @@ const Board = () => {
   } = usePacmanGame();
 
   // Get keyboard controls state
-  const upPressed = useKeyboardControls((state) => state.up);
-  const downPressed = useKeyboardControls((state) => state.down);
-  const leftPressed = useKeyboardControls((state) => state.left);
-  const rightPressed = useKeyboardControls((state) => state.right);
+  const upPressed = useKeyboardControls<Controls>(state => state.up);
+  const downPressed = useKeyboardControls<Controls>(state => state.down);
+  const leftPressed = useKeyboardControls<Controls>(state => state.left);
+  const rightPressed = useKeyboardControls<Controls>(state => state.right);
   
   // Initialize the game on component mount
   useEffect(() => {
