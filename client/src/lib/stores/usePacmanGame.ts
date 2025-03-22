@@ -801,27 +801,49 @@ function moveGhost(
   // Speed is reduced while scared
   const speed = ghost.scared ? SCARED_GHOST_SPEED : GHOST_SPEED;
   
-  // Move in the specified direction
+  // Calculate the next position based on direction
+  let newX = x;
+  let newY = y;
+  
   switch (direction) {
     case "up":
-      y -= speed;
+      newY -= speed;
       break;
     case "down":
-      y += speed;
+      newY += speed;
       break;
     case "left":
-      x -= speed;
+      newX -= speed;
       break;
     case "right":
-      x += speed;
+      newX += speed;
       break;
   }
   
   // Wrap around for tunnels
-  if (x < 0) x = COLS - 1;
-  if (x >= COLS) x = 0;
-  if (y < 0) y = ROWS - 1;
-  if (y >= ROWS) y = 0;
+  if (newX < 0) newX = COLS - 1;
+  if (newX >= COLS) newX = 0;
+  if (newY < 0) newY = ROWS - 1;
+  if (newY >= ROWS) newY = 0;
+  
+  // Check if the new position would hit a wall
+  const gridX = Math.floor(newX);
+  const gridY = Math.floor(newY);
+  
+  // Only move if there's no wall in the way
+  if (gridY >= 0 && gridY < maze.length && 
+      gridX >= 0 && gridX < maze[gridY].length && 
+      maze[gridY][gridX] !== MazeCell.WALL) {
+    x = newX;
+    y = newY;
+  } else {
+    // If we'd hit a wall, try to find a different direction
+    const available = getAvailableDirections(ghost, maze);
+    if (available.length > 0) {
+      // Pick a different direction that doesn't lead to a wall
+      direction = available[Math.floor(Math.random() * available.length)];
+    }
+  }
   
   return {
     ...ghost,

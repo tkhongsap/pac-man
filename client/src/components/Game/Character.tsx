@@ -2,7 +2,7 @@ import { PacmanState } from "./types";
 import { CELL_SIZE } from "./constants";
 
 // Constants for Pacman drawing
-const PACMAN_RADIUS = CELL_SIZE / 2 - 2;
+const PACMAN_RADIUS = CELL_SIZE / 2 - 1; // Increased Pac-Man radius (was CELL_SIZE / 2 - 2)
 const MOUTH_ANGLE_MIN = 0.1;
 const MOUTH_ANGLE_MAX = 0.6;
 

@@ -1,5 +1,5 @@
 // Board size and layout constants
-export const CELL_SIZE = 20; // Size of each cell in pixels
+export const CELL_SIZE = 30; // Size of each cell in pixels (increased from 20)
 export const ROWS = 28;      // Number of rows in the maze
 export const COLS = 28;      // Number of columns in the maze
 export const CANVAS_WIDTH = COLS * CELL_SIZE;  // Canvas width
