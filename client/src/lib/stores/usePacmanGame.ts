@@ -210,9 +210,21 @@ export const usePacmanGame = create<PacmanGameState>()(
     setDirection: (direction: Direction) => {
       const { pacman, maze } = get();
       
+      // If maze is not initialized yet, just set the direction
+      if (!maze || maze.length === 0) {
+        set(state => ({
+          pacman: {
+            ...state.pacman,
+            direction,
+            nextDirection: null
+          }
+        }));
+        return;
+      }
+      
       // Calculate potential next position
-      let nextX = pacman.x;
-      let nextY = pacman.y;
+      let nextX = Math.floor(pacman.x);
+      let nextY = Math.floor(pacman.y);
       
       switch (direction) {
         case "up":
@@ -235,29 +247,35 @@ export const usePacmanGame = create<PacmanGameState>()(
       if (nextY < 0) nextY = ROWS - 1;
       if (nextY >= ROWS) nextY = 0;
       
-      // Only set the direction if there's no wall in that direction
-      if (maze[nextY][nextX] !== MazeCell.WALL) {
-        set(state => ({
-          pacman: {
-            ...state.pacman,
-            direction,
-            nextDirection: null
-          }
-        }));
-      } else {
-        // Queue the direction change for when it becomes possible
-        set(state => ({
-          pacman: {
-            ...state.pacman,
-            nextDirection: direction
-          }
-        }));
+      // Safety check to ensure maze indices are valid
+      if (nextY >= 0 && nextY < maze.length && nextX >= 0 && nextX < maze[nextY].length) {
+        // Only set the direction if there's no wall in that direction
+        if (maze[nextY][nextX] !== MazeCell.WALL) {
+          set(state => ({
+            pacman: {
+              ...state.pacman,
+              direction,
+              nextDirection: null
+            }
+          }));
+        } else {
+          // Queue the direction change for when it becomes possible
+          set(state => ({
+            pacman: {
+              ...state.pacman,
+              nextDirection: direction
+            }
+          }));
+        }
       }
     },
     
     // Update Pacman position
     updatePacmanPosition: () => {
       const { pacman, maze } = get();
+      
+      // Safety check for maze
+      if (!maze || maze.length === 0) return;
       
       let { x, y, direction, nextDirection } = pacman;
       
@@ -289,7 +307,12 @@ export const usePacmanGame = create<PacmanGameState>()(
         if (testY >= ROWS) testY = 0;
         
         // Check if we can move in the nextDirection
-        if (maze[testY][testX] !== MazeCell.WALL) {
+        const gridTestX = Math.floor(testX);
+        const gridTestY = Math.floor(testY);
+        
+        if (gridTestY >= 0 && gridTestY < maze.length && 
+            gridTestX >= 0 && gridTestX < maze[gridTestY].length &&
+            maze[gridTestY][gridTestX] !== MazeCell.WALL) {
           // Update direction to queued direction
           direction = nextDirection;
           nextDirection = null;
@@ -326,7 +349,10 @@ export const usePacmanGame = create<PacmanGameState>()(
       const gridX = Math.floor(newX);
       const gridY = Math.floor(newY);
       
-      if (maze[gridY][gridX] !== MazeCell.WALL) {
+      // Safety check
+      if (gridY >= 0 && gridY < maze.length && 
+          gridX >= 0 && gridX < maze[gridY].length &&
+          maze[gridY][gridX] !== MazeCell.WALL) {
         // Update Pacman's position
         set(state => ({
           pacman: {
@@ -353,6 +379,9 @@ export const usePacmanGame = create<PacmanGameState>()(
     // Update ghost positions
     updateGhostPositions: () => {
       const { ghosts, maze, pacman } = get();
+      
+      // Safety check for maze
+      if (!maze || maze.length === 0) return;
       
       // Update each ghost
       const updatedGhosts = ghosts.map(ghost => {
@@ -463,6 +492,9 @@ export const usePacmanGame = create<PacmanGameState>()(
       });
       
       set({ ghosts: updatedGhosts });
+      
+      // Check victory condition
+      get().checkVictory();
     },
     
     // Check if all dots and power pellets have been eaten
@@ -688,6 +720,11 @@ function canMoveInDirection(
   if (nextY < 0) nextY = ROWS - 1;
   if (nextY >= ROWS) nextY = 0;
   
+  // Safety check for valid indices
+  if (nextY < 0 || nextY >= maze.length || nextX < 0 || nextX >= maze[nextY].length) {
+    return false;
+  }
+  
   // Check if the next cell is a wall
   return maze[nextY][nextX] !== MazeCell.WALL;
 }
@@ -829,18 +866,27 @@ function moveGhostHome(ghost: GhostState, maze: MazeCell[][]): GhostState {
   if (y < 0) y = ROWS - 1;
   if (y >= ROWS) y = 0;
   
-  // Check if ghost has arrived home
-  const gridX = Math.floor(x);
-  const gridY = Math.floor(y);
-  const arrivedHome = 
-    gridX === ghost.homeX && 
-    gridY === ghost.homeY;
+  // Check if reached home
+  const distToHome = Math.sqrt(
+    Math.pow(x - ghost.homeX, 2) + Math.pow(y - ghost.homeY, 2)
+  );
+  
+  if (distToHome < 0.5) {
+    // Reset to exact home position
+    return {
+      ...ghost,
+      x: ghost.homeX,
+      y: ghost.homeY,
+      direction,
+      returningHome: false
+    };
+  }
   
   return {
     ...ghost,
     x,
     y,
     direction,
-    returningHome: !arrivedHome
+    returningHome: true
   };
 }
