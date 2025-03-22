@@ -3,8 +3,8 @@ import { CELL_SIZE } from "./constants";
 
 // Constants for Pacman drawing
 const PACMAN_RADIUS = CELL_SIZE / 2 - 1; // Increased Pac-Man radius (was CELL_SIZE / 2 - 2)
-const MOUTH_ANGLE_MIN = 0.1;
-const MOUTH_ANGLE_MAX = 0.6;
+const MOUTH_ANGLE_MIN = 0.05; // Smaller minimum angle (was 0.1) for better animation
+const MOUTH_ANGLE_MAX = 0.8; // Larger maximum angle (was 0.6) for more expressive mouth
 
 /**
  * Draws the Pacman character on the canvas
@@ -16,8 +16,11 @@ export const drawPacman = (ctx: CanvasRenderingContext2D, pacman: PacmanState) =
   const centerX = x * CELL_SIZE + CELL_SIZE / 2;
   const centerY = y * CELL_SIZE + CELL_SIZE / 2;
   
-  // Set the color
-  ctx.fillStyle = powerMode ? "#FFFFFF" : "#FFFF00";
+  // Set the colors
+  const fillColor = powerMode ? "#FFFFFF" : "#FFFF00";
+  const outlineColor = powerMode ? "#AAAAAA" : "#FF9500";
+  
+  ctx.fillStyle = fillColor;
   
   // Calculate mouth angle based on mouthOpen state
   const mouthAngle = mouthOpen 
@@ -50,12 +53,20 @@ export const drawPacman = (ctx: CanvasRenderingContext2D, pacman: PacmanState) =
       break;
   }
   
-  // Draw the Pacman arc
+  // Draw the Pacman arc with outline
   ctx.arc(centerX, centerY, PACMAN_RADIUS, startAngle, endAngle);
   
   // Close the path and fill
   ctx.lineTo(centerX, centerY);
   ctx.fill();
+  
+  // Add a subtle outline for better visual definition
+  ctx.strokeStyle = outlineColor;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, PACMAN_RADIUS, startAngle, endAngle);
+  ctx.lineTo(centerX, centerY);
+  ctx.stroke();
   
   // Add the eye
   ctx.fillStyle = "black";
@@ -82,8 +93,36 @@ export const drawPacman = (ctx: CanvasRenderingContext2D, pacman: PacmanState) =
   
   // Only draw the eye when not in power mode
   if (!powerMode) {
+    // Draw the white of the eye
+    ctx.fillStyle = "white";
     ctx.beginPath();
-    ctx.arc(eyeX, eyeY, PACMAN_RADIUS / 6, 0, 2 * Math.PI);
+    ctx.arc(eyeX, eyeY, PACMAN_RADIUS / 5, 0, 2 * Math.PI);
+    ctx.fill();
+    
+    // Draw the pupil (black)
+    ctx.fillStyle = "black";
+    
+    // Adjust pupil position based on direction for a more lively look
+    let pupilOffsetX = 0;
+    let pupilOffsetY = 0;
+    
+    switch (direction) {
+      case "right":
+        pupilOffsetX = PACMAN_RADIUS / 12;
+        break;
+      case "left":
+        pupilOffsetX = -PACMAN_RADIUS / 12;
+        break;
+      case "up":
+        pupilOffsetY = -PACMAN_RADIUS / 12;
+        break;
+      case "down":
+        pupilOffsetY = PACMAN_RADIUS / 12;
+        break;
+    }
+    
+    ctx.beginPath();
+    ctx.arc(eyeX + pupilOffsetX, eyeY + pupilOffsetY, PACMAN_RADIUS / 10, 0, 2 * Math.PI);
     ctx.fill();
   }
 };
